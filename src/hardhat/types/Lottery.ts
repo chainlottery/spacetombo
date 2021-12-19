@@ -19,9 +19,9 @@ export interface Token {
 }
 
 export interface Periods {
-    beginningOfParticipationPeriod: number;
-    endOfParticipationPeriod: number;
-    endOfPreparationPeriod: number;
+    beginningOfParticipationPeriod: BigNumber;
+    endOfParticipationPeriod: BigNumber;
+    endOfPreparationPeriod: BigNumber;
 }
 
 export interface LotteryEvent {
@@ -45,4 +45,15 @@ export enum LotteryState
     WaitingForNextEvent,
     WaitingForFundsRelease,
     Complete 
+}
+
+interface ShipParts {
+    body: BigNumber;
+    skin: BigNumber;
+    weapon: BigNumber;
+    booster: BigNumber;
+}
+
+export interface Ship {
+    parts: ShipParts;
 }

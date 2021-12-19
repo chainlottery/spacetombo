@@ -58,16 +58,16 @@ const config: HardhatUserConfig = {
       default: 0, // takes the first account as deployer
       mumbai: 0, // similarly on mainnet it will take the first account as deployer. Note though that depending on how hardhat network are configured, the account 0 on one network can be different than on another
     },
-    player1: { default: 1, mumbai: 1 },
-    player2: { default: 2, mumbai: 2 },
-    player3: { default: 3, mumbai: 3 },
-    player4: { default: 4, mumbai: 4 },
-    player5: { default: 5, mumbai: 5 },
-    player6: { default: 6, mumbai: 6 },
-    player7: { default: 7, mumbai: 7 },
-    player8: { default: 8, mumbai: 8 },
-    player9: { default: 9, mumbai: 9 },
-    player10: { default: 10, mumbai: 10 }
+    p1: { default: 1, mumbai: 1 }, // Player1
+    p2: { default: 2, mumbai: 2 }, // Player2
+    p3: { default: 3, mumbai: 3 }, // ...
+    p4: { default: 4, mumbai: 4 },
+    p5: { default: 5, mumbai: 5 },
+    p6: { default: 6, mumbai: 6 },
+    p7: { default: 7, mumbai: 7 },
+    p8: { default: 8, mumbai: 8 },
+    p9: { default: 9, mumbai: 9 },
+    p10: { default: 10, mumbai: 10 }
     // If more players are needed, consider adding them using a for() loop
   },
 };

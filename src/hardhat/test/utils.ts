@@ -3,7 +3,7 @@ import { networkConfig } from "../config/hardhat-sub-config";
 import { Parameters, Periods, Token, LotteryEvent, ChainlinkVRFData } from "../types/Lottery"
 import { BigNumber } from "@ethersproject/bignumber";
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { LinkToken, Lottery } from '../typechain';
+import { LinkToken, Lottery, LotteryToken, PriceConsumer } from '../typechain';
 import { Logger } from 'ethers/lib/utils';
 import { LogLevel } from '@ethersproject/logger';
 
@@ -18,13 +18,13 @@ export async function getDefaultParameters(): Promise<Parameters> {
     let linkAddress;
     let priceConsumerAddress;
     const chainId = await getChainId() as keyof typeof networkConfig;
-
+    
     if (+chainId == 31337) {
         // Local node 
-
+        
         // Deploys fresh chainlink mocks
         await deployments.fixture(['mocks', 'feed']);
-
+        
         // VRF
         const deployedVRFCoordinator = await deployments.get("VRFCoordinatorMock");
         vrfCoordinatorAddress = deployedVRFCoordinator.address;
@@ -45,9 +45,9 @@ export async function getDefaultParameters(): Promise<Parameters> {
     const currentUnixTimeStamp = Math.floor(new Date().getTime() / 1000);
     
     const periods: Periods = {
-        beginningOfParticipationPeriod: currentUnixTimeStamp + 100,
-        endOfParticipationPeriod: currentUnixTimeStamp + 101,
-        endOfPreparationPeriod: currentUnixTimeStamp + 102
+        beginningOfParticipationPeriod: BigNumber.from(currentUnixTimeStamp + 60),
+        endOfParticipationPeriod: BigNumber.from(currentUnixTimeStamp + 60 * 2),
+        endOfPreparationPeriod: BigNumber.from(currentUnixTimeStamp + 60 * 3)
     };
     
     const tokenInfo: Token = {
@@ -58,11 +58,11 @@ export async function getDefaultParameters(): Promise<Parameters> {
     
     const events: LotteryEvent[] = [
         {    
-            timestamp: currentUnixTimeStamp + 103,
+            timestamp: currentUnixTimeStamp + 60 * 4,
             description: "Event 1"
         },
         {    
-            timestamp: currentUnixTimeStamp + 104,
+            timestamp: currentUnixTimeStamp + 60 * 5,
             description: "Event 2"
         }
     ];
@@ -87,13 +87,13 @@ export async function getDefaultParameters(): Promise<Parameters> {
     };
 }
 
-export async function lotteryFixture(parameters?: Parameters): Promise<Lottery> {
-
+export async function lotteryFixture(parameters?: Parameters): Promise<[Lottery, Parameters, LotteryToken, PriceConsumer]> {
+    
     if(!parameters) {
         parameters = await getDefaultParameters();
     }
 
-    return await deployments.createFixture(async hre => {
+    const lottery = await deployments.createFixture(async hre => {
         const { deployer } = await hre.getNamedAccounts();
         
         const result = await deployments.deploy('Lottery', {
@@ -104,19 +104,26 @@ export async function lotteryFixture(parameters?: Parameters): Promise<Lottery> 
         
         return await ethers.getContractAt("Lottery", result.address);
     })();
+    
+    return [
+        lottery,
+        parameters,
+        await ethers.getContractAt("LotteryToken", await lottery.token()),
+        await ethers.getContractAt("PriceConsumer", (await deployments.get("PriceConsumer")).address),
+    ];
 }
 
 export async function getSignersIdentity(): Promise<{ [name: string]: SignerIdentity }> {
     const accounts = await getNamedAccounts();
     const accountsNames = Object.keys(accounts) ;
-    const signers = await ethers.getSigners();
+    //const signers = await ethers.getSigners();
     const deployedLottery = await deployments.get("Lottery");
     //console.log("accountsLength=" + accountsNames.length + " signersCount=" + signers.length);
     //console.log("accounts0=" + accounts[accountsNames[0]]);
-
+    
     let linkAddress;
     const chainId = await getChainId() as keyof typeof networkConfig;
-
+    
     if (+chainId == 31337) {
         // Local node 
         const deployedLINK = await deployments.get("LinkToken");
@@ -124,21 +131,21 @@ export async function getSignersIdentity(): Promise<{ [name: string]: SignerIden
     } else {
         linkAddress = networkConfig[chainId]['linkToken'];
     }
-
+    
     let result: { [name: string]: SignerIdentity } = {};
     for (let i = 0; i < accountsNames.length; i++) {
         const name = accountsNames[i];
         const signer = await ethers.getSigner(accounts[name]);
         
         const lotteryContract = await ethers.getContractAt('Lottery', deployedLottery.address, signer) as Lottery;
-
+        
         /*
-            Disable warnings temporarily to avoid the warning "Duplicate definition of Transfer"
-            See: https://github.com/ethers-io/ethers.js/issues/905
+        Disable warnings temporarily to avoid the warning "Duplicate definition of Transfer"
+        See: https://github.com/ethers-io/ethers.js/issues/905
         */
         Logger.setLogLevel(LogLevel.ERROR);
         const linkContract = await ethers.getContractAt('LinkToken', linkAddress, signer) as LinkToken;
-
+        
         // Restore log level
         Logger.setLogLevel(LogLevel.DEBUG);
         
