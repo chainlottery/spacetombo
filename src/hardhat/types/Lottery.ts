@@ -25,7 +25,7 @@ export interface Periods {
 }
 
 export interface LotteryEvent {
-    timestamp: number;
+    timestamp: BigNumber;
     description: string;
 }
 

@@ -1,19 +1,32 @@
 import { ethers, deployments, getChainId, getNamedAccounts } from 'hardhat';
 import { networkConfig } from "../config/hardhat-sub-config";
-import { Parameters, Periods, Token, LotteryEvent, ChainlinkVRFData } from "../types/Lottery"
+import { Parameters, Periods, Token, LotteryEvent, ChainlinkVRFData, Ship } from "../types/Lottery"
 import { BigNumber } from "@ethersproject/bignumber";
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { LinkToken, Lottery, LotteryToken, PriceConsumer } from '../typechain';
-import { Logger } from 'ethers/lib/utils';
+import { LinkToken, Lottery, LotteryToken, PriceConsumer, VRFCoordinatorMock } from '../typechain';
+import { BytesLike, Logger } from 'ethers/lib/utils';
 import { LogLevel } from '@ethersproject/logger';
 
-export interface SignerIdentity {
+interface SignerIdentity {
     signer: SignerWithAddress;
     lottery: Lottery;
     link: LinkToken;
 }
 
-export async function getDefaultParameters(): Promise<Parameters> {
+class LocalChain {
+    vrfCoordinator: VRFCoordinatorMock;
+    
+    constructor(vrfCoordinator: VRFCoordinatorMock) {
+        this.vrfCoordinator = vrfCoordinator;
+    }
+    
+    vrfFulfillRandomness(requestId: BytesLike, consumerContract: string) {
+        const randomness = Math.floor(Math.random() * 1000) + 1; // Random between 1 and 1000
+        return this.vrfCoordinator.callBackWithRandomness(requestId, randomness, consumerContract);
+    }
+}
+
+async function getDefaultParameters(): Promise<Parameters> {
     let vrfCoordinatorAddress;
     let linkAddress;
     let priceConsumerAddress;
@@ -58,11 +71,11 @@ export async function getDefaultParameters(): Promise<Parameters> {
     
     const events: LotteryEvent[] = [
         {    
-            timestamp: currentUnixTimeStamp + 60 * 4,
+            timestamp: BigNumber.from(currentUnixTimeStamp + 60 * 4),
             description: "Event 1"
         },
         {    
-            timestamp: currentUnixTimeStamp + 60 * 5,
+            timestamp: BigNumber.from(currentUnixTimeStamp + 60 * 5),
             description: "Event 2"
         }
     ];
@@ -87,12 +100,22 @@ export async function getDefaultParameters(): Promise<Parameters> {
     };
 }
 
-export async function lotteryFixture(parameters?: Parameters): Promise<[Lottery, Parameters, LotteryToken, PriceConsumer]> {
+async function lotteryFixture(parameters?: Parameters): Promise<[Lottery, Parameters, LocalChain | undefined, LotteryToken, PriceConsumer]> {
     
     if(!parameters) {
         parameters = await getDefaultParameters();
     }
-
+    
+    let localChain: LocalChain | undefined;
+    if(+await getChainId() === 31337) {
+        // Local node
+        
+        // Set local chain info
+        const deployedVRFCoordinator = await deployments.get("VRFCoordinatorMock");
+        const vrfCoordinator = await ethers.getContractAt("VRFCoordinatorMock", deployedVRFCoordinator.address);
+        localChain = new LocalChain(vrfCoordinator);
+    }
+    
     const lottery = await deployments.createFixture(async hre => {
         const { deployer } = await hre.getNamedAccounts();
         
@@ -108,12 +131,14 @@ export async function lotteryFixture(parameters?: Parameters): Promise<[Lottery,
     return [
         lottery,
         parameters,
+        localChain,
         await ethers.getContractAt("LotteryToken", await lottery.token()),
         await ethers.getContractAt("PriceConsumer", (await deployments.get("PriceConsumer")).address),
     ];
 }
 
-export async function getSignersIdentity(): Promise<{ [name: string]: SignerIdentity }> {
+
+async function getSignersIdentity(): Promise<{ [name: string]: SignerIdentity }> {
     const accounts = await getNamedAccounts();
     const accountsNames = Object.keys(accounts) ;
     //const signers = await ethers.getSigners();
@@ -160,3 +185,23 @@ export async function getSignersIdentity(): Promise<{ [name: string]: SignerIden
     //console.log(result);
     return result;
 }
+
+const dummyShip: Ship = {
+    parts: {
+        body: BigNumber.from(0), 
+        skin: BigNumber.from(0), 
+        weapon: BigNumber.from(0), 
+        booster: BigNumber.from(0)
+    }
+};
+
+export {
+    getDefaultParameters,
+    lotteryFixture,
+    getSignersIdentity,
+    dummyShip
+};
+export type {
+    SignerIdentity,
+    LocalChain
+};
