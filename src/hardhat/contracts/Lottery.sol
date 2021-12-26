@@ -77,7 +77,7 @@ contract Lottery is VRFConsumerBase {
 
     // Events
     LotteryEvent[] public events;
-    uint private remainingEventsCount;
+    uint public remainingEventsCount;
 
     // Participants
     Participant[] public participants;
