@@ -419,7 +419,7 @@ contract Lottery is VRFConsumerBase {
             return State.OngoingParticipationPeriod;
         }
 
-        if(block.timestamp < periods.endOfPreparationPeriod) {
+        if(participants.length > 0 && block.timestamp < periods.endOfPreparationPeriod) {
             return State.OngoingPreparationPeriod;
         }
 
