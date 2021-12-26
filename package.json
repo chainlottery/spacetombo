@@ -1,23 +1,20 @@
 {
   "name": "nft-lottery",
   "version": "1.0.0",
-  "description": "NFT Lottery for chainlink hackaton",
+  "description": "NFT Lottery for the Chainlink Hackathon Fall 2021",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SoxZz5/nft-lottery.git"
+    "url": "git+https://github.com/chainlottery/spacetombo.git"
   },
   "author": "SoxZz5 / KonyTech / Juicy7",
   "license": "MIT",
-  "homepage": "https://github.com/SoxZz5/nft-lottery#readme",
+  "homepage": "https://github.com/chainlottery/spacetombo#readme",
   "scripts": {
     "test": "hardhat test ./src/hardhat/test/unit/States_tests.ts ./src/hardhat/test/integration/OngoingParticipationPeriod_tests.ts",
-    "hook:install": "npx --no-install husky add .husky/commit-msg \"npx --no-install commitlint --edit $1\" && npx --no-install husky add .husky/post-merge \"yarn build:node\"",
     "start:node": "yarn hardhat node",
     "build:node": "yarn hardhat compile --force",
+    "hook:install": "npx --no-install husky add .husky/commit-msg \"npx --no-install commitlint --edit $1\" && npx --no-install husky add .husky/post-merge \"yarn build:node\"",
     "husky:install": "npx --no-install rimraf .husky && npx husky install && npm run hook:install",
-    "dev": "vite",
-    "build": "yarn build:node && vite build",
-    "serve": "vite preview",
     "tsnode": "node --loader ts-node/esm --no-warnings",
     "test:shuffle": "yarn tsnode ./src/scripts/lottery-shuffle/Shuffle.ts",
     "build:ipfs": "yarn tsnode ./src/scripts/ipfs/0_pre_generate.ts && yarn tsnode ./src/scripts/ipfs/1_generate_car_images.ts && yarn tsnode ./src/scripts/ipfs/2_generate_car_metadata.ts && yarn tsnode ./src/scripts/ipfs/3_prepare_upload.ts"
@@ -110,17 +107,5 @@
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"
     }
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
   }
 }

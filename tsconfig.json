@@ -6,8 +6,6 @@
     "esModuleInterop": true,
     "outDir": "dist",
     "declaration": true,
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "types": ["vite/client", "node", "jest"],
     "allowJs": false,
     "skipLibCheck": false,
     "allowSyntheticDefaultImports": true,
@@ -17,8 +15,6 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react",
-    "baseUrl": "./",
     "paths": {
       "@/*": ["./src/*"]
     }
